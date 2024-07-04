@@ -78,6 +78,8 @@ userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
+// Token------------------------------------------
+
 // acces token aur refresh token ko generate karne ka method both are jwt tokens
 
 // explore why not used arrow fn insted of function()
