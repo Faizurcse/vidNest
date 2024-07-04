@@ -103,6 +103,10 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createUser, "User regestered successfully"));
 });
 
+// login user
 
+const loginUser = asyncHandler(async (req,res)=>{
+  
+})
 
-export { registerUser };
+export { registerUser,loginUser};

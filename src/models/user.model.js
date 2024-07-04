@@ -6,7 +6,6 @@
 
 // MUlter == Multer is a node.js middleware for handling multipart/form-data, which is primarily used for uploading files. It is written on top of busboy for maximum efficiency.
 
-
 // here we are going to two step verfication  setting best practices
 
 // first multer ka use krte hue file ko temporary local storage server par rkho
@@ -79,6 +78,14 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 };
 
 // Token------------------------------------------
+// Access token time limit is short aur short duration mai expire hogaa ...
+// refreshToken time limit is long aur long duration mai expire hogaa ...
+
+/* refresh token DB aur user dono kai pss
+ hota hai user ko access token hi diya 
+jata hai par har baar validate(every tyme password dalo nkko) nai kro appka refreshtoken
+ aur data base refresh token same hua toh new access
+  token de diya jata hai */
 
 // acces token aur refresh token ko generate karne ka method both are jwt tokens
 
@@ -117,4 +124,3 @@ userSchema.methods.generateRefreshToken = function () {
 };
 
 export const User = mongoose.model("User", userSchema);
-
