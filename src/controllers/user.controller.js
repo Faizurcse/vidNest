@@ -3,6 +3,25 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+
+const generateAccessAndRefreshTokens = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken; // here adding refreshToken in DB
+    await user.save({ validateBeforeSave: false }); // here save the refresh token isme bina pwd kai sve kro
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(
+      500,
+      "Something went wrong while generating refresh and access tokens"
+    );
+  }
+};
+
 // its is the higher order function
 const registerUser = asyncHandler(async (req, res) => {
   // res.status(200).json({
@@ -105,8 +124,95 @@ const registerUser = asyncHandler(async (req, res) => {
 
 // login user
 
-const loginUser = asyncHandler(async (req,res)=>{
-  
-})
+const loginUser = asyncHandler(async (req, res) => {
+  // req body se data lao
+  // username or email based validation
+  // find the user
+  // password check kro
+  // acces and refresh token generate kro
+  // send in cookies
 
-export { registerUser,loginUser};
+  // req body se data lao------------
+  const { email, username, password } = req.body;
+
+  // username or email based validation---------------
+  if (!username || !email) {
+    throw new ApiError(400, "username or password is required");
+  }
+
+  // find the user-----------------
+  const user = await User.findOne({
+    $or: [{ username }, { email }], // inside or u can pass object inside arrray(from MONGO_DB)
+  });
+
+  // check if user not register
+  if (!user) {
+    throw new ApiError(404, "User does not exist");
+  }
+
+  // password check kro-----------------------------
+  const isPasswordValid = await user.isPasswordCorrect(password);
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid user credentials");
+  }
+
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
+
+  const loggnedInUser = await User.findById(User._id).select(
+    "-password -refreshToken"
+  );
+
+  // send in cookies
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      //by chance if want to user this data can easily take from frontEnd
+      new ApiResponse(
+        200,
+        {
+          user: loggnedInUser,
+          accessToken,
+          refreshToken,
+        },
+        "User logged In Successfully"
+      )
+    );
+});
+
+// LoggedOut----------------------------------------
+const logoutUser = asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        refreshToken: undefined,
+      },
+    },
+    {
+      new: true, // yeh updated values return karegaa
+    }
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User logged Out"));
+});
+
+export { registerUser, loginUser, logoutUser };
