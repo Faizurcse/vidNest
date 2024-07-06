@@ -64,22 +64,36 @@ const userSchema = new Schema(
 // when pwd is changegs its encrypt the data pwd then store in DB
 // Mongoose middleware function for hashing a password before saving
 //middleware is nothing but koi bhi work krne se pahle milkr jana ass mems
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+// userSchema.pre("save", async function (next) {
+//   if (!this.isModified("password")) return next();
 
-  this.password = await bcrypt.hash(this.password, 10); // here 10 rounds
+//   this.password = await bcrypt.hash(this.password, 10); // here 10 rounds
+//   next();
+// });
+
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
   next();
 });
+
 
 // coustom methods of moongoose
 
 userSchema.methods.isPasswordCorrect = async function (password) {
+  
+  console.log('Password:----------------', password);
+  console.log('Hashed Password:--------------', this.password);
   return await bcrypt.compare(password, this.password);
 };
 
 // Token------------------------------------------
 // Access token time limit is short aur short duration mai expire hogaa ...
-// refreshToken time limit is long aur long duration mai expire hogaa ...
+// refreshToken(session storage) time limit is long aur long duration mai expire hogaa ...
 
 /* refresh token DB aur user dono kai pss
  hota hai user ko access token hi diya 

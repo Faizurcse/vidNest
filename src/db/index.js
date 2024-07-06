@@ -23,3 +23,11 @@ const connectDB = async () => {
 };
 
 export default connectDB;
+
+
+// left join ----------------------
+// two table ko connect karne kai liye krte hai
+// isme ek model ka id kai through dusro kai model kai id ko connect krte hai
+
+// aggrission pipeline explore-----------------------------
+// nested lookup
